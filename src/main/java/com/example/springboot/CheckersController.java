@@ -44,7 +44,7 @@ public class CheckersController {
                 .allMatch(isNotRed -> isNotRed == squares.get(0).isBlack());
         if (hasWinner){
             JsonNode responseJson = objectMapper.readTree(String.format("{\"board\":%s,\"winner\":\"%s\"}",
-                    boardJson.asText(),
+                    boardJson.at("/squares").toString(),
                     isBlack.get() ? "black" : "red"));
             return new ResponseEntity<>(responseJson, HttpStatus.OK);
         }
@@ -211,6 +211,13 @@ public class CheckersController {
         int yMove = yTo - yFrom;
         boolean validMove = Math.pow(xMove * yMove, 2) == 1;
         Square newStartSquare = startSquare.toBuilder().containsPiece(false).build();
+
+        if (validMove && startSquare.isKing()) {
+            Square newToSquare = toSquare.toBuilder().containsPiece(true).isBlack(startSquare.isBlack()).isKing(true).build();
+            newStartSquare = newStartSquare.toBuilder().isKing(false).build();
+            return normalMove(newStartSquare, newToSquare);
+        }
+
         if (validMove && startSquare.isBlack() && yMove > 0) {
             Square newToSquare = toSquare.toBuilder().containsPiece(true).isBlack(true).build();
             return normalMove(newStartSquare, newToSquare);
@@ -221,11 +228,6 @@ public class CheckersController {
             return normalMove(newStartSquare, newToSquare);
         }
 
-        if (validMove && startSquare.isKing()) {
-            Square newToSquare = toSquare.toBuilder().containsPiece(true).isBlack(startSquare.isBlack()).isKing(true).build();
-            newStartSquare = newStartSquare.toBuilder().isKing(false).build();
-            return normalMove(newStartSquare, newToSquare);
-        }
 
         List<TakeMove> validTakeMoves = findValidTakeMoves(startSquare, boardRepository.findAll().get(0).getSquares());
         List<TakeMove> matchingMoves = validTakeMoves.stream().filter(takeMove -> {
@@ -295,7 +297,7 @@ public class CheckersController {
                             .map(piece ->
                                     piece.getXCoord() == square.getXCoord() && piece.getYCoord() == square.getYCoord()
                             ).reduce(false, (aBoolean, aBoolean2) -> aBoolean || aBoolean2);
-                    if (needsPieceRemoved) return square.toBuilder().containsPiece(false).build();
+                    if (needsPieceRemoved) return square.toBuilder().containsPiece(false).isKing(false).build();
                     return square;
                 }).map(square -> {
                     if (square.getYCoord() == toSquare.getYCoord() && square.getXCoord() == toSquare.getXCoord())
