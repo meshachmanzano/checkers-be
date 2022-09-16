@@ -131,7 +131,7 @@ public class CheckersController {
                 currentPosition <= 45 &&
                         !squares.get(currentPosition + 18).isContainsPiece() &&
                         squares.get(currentPosition + 9).isContainsPiece() &&
-                        squares.get(currentPosition + 9).isBlack() ^ currentSquare.isBlack()
+                        squares.get(currentPosition + 9).isBlack() ^ startSquare.isBlack()
         ) {
             piecesRemoved.add(squares.get(currentPosition + 9));
             TakeMove takeMove = new TakeMove(startSquare, squares.get(currentPosition + 18), piecesRemoved);
@@ -144,7 +144,7 @@ public class CheckersController {
                 currentPosition >= 18 &&
                         !squares.get(currentPosition - 18).isContainsPiece() &&
                         squares.get(currentPosition - 9).isContainsPiece() &&
-                        squares.get(currentPosition - 9).isBlack() ^ currentSquare.isBlack()
+                        squares.get(currentPosition - 9).isBlack() ^ startSquare.isBlack()
         ) {
             piecesRemoved.add(squares.get(currentPosition - 9));
             TakeMove takeMove = new TakeMove(startSquare, squares.get(currentPosition - 18), piecesRemoved);
@@ -157,7 +157,7 @@ public class CheckersController {
                 currentPosition <= 49 &&
                         !squares.get(currentPosition + 14).isContainsPiece() &&
                         squares.get(currentPosition + 7).isContainsPiece() &&
-                        squares.get(currentPosition + 7).isBlack() ^ currentSquare.isBlack()
+                        squares.get(currentPosition + 7).isBlack() ^ startSquare.isBlack()
         ) {
             piecesRemoved.add(squares.get(currentPosition + 7));
             TakeMove takeMove = new TakeMove(startSquare, squares.get(currentPosition + 14), piecesRemoved);
@@ -170,7 +170,7 @@ public class CheckersController {
                 currentPosition >= 14 &&
                         !squares.get(currentPosition - 14).isContainsPiece() &&
                         squares.get(currentPosition - 7).isContainsPiece() &&
-                        squares.get(currentPosition - 7).isBlack() ^ currentSquare.isBlack()
+                        squares.get(currentPosition - 7).isBlack() ^ startSquare.isBlack()
         ) {
             piecesRemoved.add(squares.get(currentPosition - 7));
             TakeMove takeMove = new TakeMove(startSquare, squares.get(currentPosition - 14), piecesRemoved);
