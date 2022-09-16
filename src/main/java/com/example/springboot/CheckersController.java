@@ -91,9 +91,10 @@ public class CheckersController {
         int startPosition = startSquare.getYCoord() * 8 + startSquare.getXCoord();
         if (
                 startPosition <= 45 &&
-                !squares.get(startPosition + 18).isContainsPiece() &&
-                squares.get(startPosition + 9).isContainsPiece() &&
-                squares.get(startPosition + 9).isBlack() ^ startSquare.isBlack()
+                        !squares.get(startPosition + 18).isContainsPiece() &&
+                        squares.get(startPosition + 9).isContainsPiece() &&
+                        squares.get(startPosition + 9).getXCoord() != 0 && squares.get(startPosition + 9).getXCoord() != 7 &&
+                        squares.get(startPosition + 9).isBlack() ^ startSquare.isBlack()
         ) {
             takeMoves.addAll(addTakeMoves(startPosition + 9, startPosition + 18, startSquare, takeMoves, squares));
         }
@@ -101,6 +102,7 @@ public class CheckersController {
                 startPosition >= 18 &&
                         !squares.get(startPosition - 18).isContainsPiece() &&
                         squares.get(startPosition - 9).isContainsPiece() &&
+                        squares.get(startPosition - 9).getXCoord() != 0 && squares.get(startPosition - 9).getXCoord() != 7 &&
                         squares.get(startPosition - 9).isBlack() ^ startSquare.isBlack()
         ) {
             takeMoves.addAll(addTakeMoves(startPosition - 9, startPosition - 18, startSquare, takeMoves, squares));
@@ -109,6 +111,7 @@ public class CheckersController {
                 startPosition <= 49 &&
                         !squares.get(startPosition + 14).isContainsPiece() &&
                         squares.get(startPosition + 7).isContainsPiece() &&
+                        squares.get(startPosition + 7).getXCoord() != 0 && squares.get(startPosition + 7).getXCoord() != 7 &&
                         squares.get(startPosition + 7).isBlack() ^ startSquare.isBlack()
         ) {
             takeMoves.addAll(addTakeMoves(startPosition + 7, startPosition + 14, startSquare, takeMoves, squares));
@@ -117,6 +120,7 @@ public class CheckersController {
                 startPosition >= 14 &&
                         !squares.get(startPosition - 14).isContainsPiece() &&
                         squares.get(startPosition - 7).isContainsPiece() &&
+                        squares.get(startPosition - 7).getXCoord() != 0 && squares.get(startPosition - 7).getXCoord() != 7 &&
                         squares.get(startPosition - 7).isBlack() ^ startSquare.isBlack()
         ) {
             takeMoves.addAll(addTakeMoves(startPosition - 7, startPosition - 14, startSquare, takeMoves, squares));
@@ -131,6 +135,7 @@ public class CheckersController {
                 currentPosition <= 45 &&
                         !squares.get(currentPosition + 18).isContainsPiece() &&
                         squares.get(currentPosition + 9).isContainsPiece() &&
+                        squares.get(currentPosition + 9).getXCoord() != 0 && squares.get(currentPosition + 9).getXCoord() != 7 &&
                         squares.get(currentPosition + 9).isBlack() ^ startSquare.isBlack()
         ) {
             piecesRemoved.add(squares.get(currentPosition + 9));
@@ -144,6 +149,7 @@ public class CheckersController {
                 currentPosition >= 18 &&
                         !squares.get(currentPosition - 18).isContainsPiece() &&
                         squares.get(currentPosition - 9).isContainsPiece() &&
+                        squares.get(currentPosition - 9).getXCoord() != 0 && squares.get(currentPosition - 9).getXCoord() != 7 &&
                         squares.get(currentPosition - 9).isBlack() ^ startSquare.isBlack()
         ) {
             piecesRemoved.add(squares.get(currentPosition - 9));
@@ -157,6 +163,7 @@ public class CheckersController {
                 currentPosition <= 49 &&
                         !squares.get(currentPosition + 14).isContainsPiece() &&
                         squares.get(currentPosition + 7).isContainsPiece() &&
+                        squares.get(currentPosition + 7).getXCoord() != 0 && squares.get(currentPosition + 7).getXCoord() != 7 &&
                         squares.get(currentPosition + 7).isBlack() ^ startSquare.isBlack()
         ) {
             piecesRemoved.add(squares.get(currentPosition + 7));
@@ -170,6 +177,7 @@ public class CheckersController {
                 currentPosition >= 14 &&
                         !squares.get(currentPosition - 14).isContainsPiece() &&
                         squares.get(currentPosition - 7).isContainsPiece() &&
+                        squares.get(currentPosition - 7).getXCoord() != 0 && squares.get(currentPosition - 7).getXCoord() != 7 &&
                         squares.get(currentPosition - 7).isBlack() ^ startSquare.isBlack()
         ) {
             piecesRemoved.add(squares.get(currentPosition - 7));
