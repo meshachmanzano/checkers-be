@@ -34,9 +34,11 @@ public class CheckersController {
     public ResponseEntity<JsonNode> board() throws JsonProcessingException {
         JsonNode boardJson = objectMapper.valueToTree(boardRepository.findAll().get(0));
         AtomicBoolean isBlack = new AtomicBoolean(true);
-        List<Square> squares = boardRepository.findAll().get(0).getSquares();
-        boolean hasWinner = squares.stream()
+        List<Square> squares = boardRepository.findAll().get(0).getSquares()
+                .stream()
                 .filter((Square::isContainsPiece))
+                .toList();
+        boolean hasWinner = squares.stream()
                 .map(square -> {
                     isBlack.set(square.isBlack());
                     return square.isBlack();
@@ -54,8 +56,7 @@ public class CheckersController {
     }
     private void makeKings() {
         Board board = boardRepository.findAll().get(0);
-        List<Square> squares = board.getSquares();
-        List<Square> newSquares = squares.stream().map(square -> {
+        List<Square> updatedSquares = board.getSquares().stream().map(square -> {
             if (square.getYCoord() == 0 && !square.isBlack()) {
                 return square.toBuilder().isKing(true).build();
             }
@@ -64,11 +65,11 @@ public class CheckersController {
             }
             return square;
         }).toList();
-        boardRepository.save(board.toBuilder().squares(newSquares).build());
+        boardRepository.save(board.toBuilder().squares(updatedSquares).build());
     }
     private ResponseEntity<JsonNode> normalMove(Square newStartSquare, Square newToSquare) {
         Board board = boardRepository.findAll().get(0);
-        List<Square> newSquares = board.getSquares();
+        List<Square> newSquares = new ArrayList<>(board.getSquares());
         newSquares.set(newStartSquare.getYCoord() * 8 + newStartSquare.getXCoord(), newStartSquare);
         newSquares.set(newToSquare.getYCoord() * 8 + newToSquare.getXCoord(), newToSquare);
         boardRepository.save(board.toBuilder().squares(newSquares).build());
@@ -76,17 +77,28 @@ public class CheckersController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    private  List<TakeMove> addTakeMoves(int takePosition, int movePosition, Square startSquare, List<TakeMove> takeMoves, List<Square> squares) {
+    private  List<TakeMove> addTakeMoves(int takePosition, int movePosition, Square startSquare, Square endSquare, List<TakeMove> takeMoves, List<Square> squares) {
         List<Square> piecesRemoved = new ArrayList<>();
         piecesRemoved.add(squares.get(takePosition));
         TakeMove takeMove = new TakeMove(startSquare, squares.get(movePosition), piecesRemoved);
         takeMoves.add(takeMove);
-        squares.set(takePosition, squares.get(takePosition).toBuilder().containsPiece(false).build());
-        takeMoves.addAll(findValidTakeMoves(squares.get(movePosition), squares, startSquare, piecesRemoved));
+        List<Square> updatedSquares = new ArrayList<>(squares);
+        updatedSquares.set(takePosition, squares.get(takePosition).toBuilder().containsPiece(false).build());
+        takeMoves.addAll(findValidTakeMoves(squares.get(movePosition), updatedSquares, startSquare, endSquare, piecesRemoved));
         return takeMoves;
     }
 
-    private List<TakeMove> findValidTakeMoves(Square startSquare, List<Square> squares) {
+    private  List<TakeMove> addTakeMoves(int takePosition, int movePosition, Square startSquare, Square endSquare, List<TakeMove> takeMoves, List<Square> squares, List<Square> piecesRemoved) {
+        List<Square> newPiecesRemoved = new ArrayList<>(piecesRemoved);
+        newPiecesRemoved.add(squares.get(takePosition));
+        TakeMove takeMove = new TakeMove(startSquare, squares.get(movePosition), newPiecesRemoved);
+        takeMoves.add(takeMove);
+        squares.set(takePosition, squares.get(takePosition).toBuilder().containsPiece(false).build());
+        takeMoves.addAll(findValidTakeMoves(squares.get(movePosition), squares, startSquare, endSquare, newPiecesRemoved));
+        return takeMoves;
+    }
+
+    private List<TakeMove> findValidTakeMoves(Square startSquare, Square toSquare, List<Square> squares) {
         List<TakeMove> takeMoves = new LinkedList<>();
         int startPosition = startSquare.getYCoord() * 8 + startSquare.getXCoord();
         if (
@@ -96,7 +108,7 @@ public class CheckersController {
                         squares.get(startPosition + 9).getXCoord() != 0 && squares.get(startPosition + 9).getXCoord() != 7 &&
                         squares.get(startPosition + 9).isBlack() ^ startSquare.isBlack()
         ) {
-            takeMoves.addAll(addTakeMoves(startPosition + 9, startPosition + 18, startSquare, takeMoves, squares));
+            takeMoves.addAll(addTakeMoves(startPosition + 9, startPosition + 18, startSquare, toSquare, takeMoves, squares));
         }
         if (
                 startPosition >= 18 &&
@@ -105,7 +117,7 @@ public class CheckersController {
                         squares.get(startPosition - 9).getXCoord() != 0 && squares.get(startPosition - 9).getXCoord() != 7 &&
                         squares.get(startPosition - 9).isBlack() ^ startSquare.isBlack()
         ) {
-            takeMoves.addAll(addTakeMoves(startPosition - 9, startPosition - 18, startSquare, takeMoves, squares));
+            takeMoves.addAll(addTakeMoves(startPosition - 9, startPosition - 18, startSquare, toSquare, takeMoves, squares));
         }
         if (
                 startPosition <= 49 &&
@@ -114,7 +126,7 @@ public class CheckersController {
                         squares.get(startPosition + 7).getXCoord() != 0 && squares.get(startPosition + 7).getXCoord() != 7 &&
                         squares.get(startPosition + 7).isBlack() ^ startSquare.isBlack()
         ) {
-            takeMoves.addAll(addTakeMoves(startPosition + 7, startPosition + 14, startSquare, takeMoves, squares));
+            takeMoves.addAll(addTakeMoves(startPosition + 7, startPosition + 14, startSquare, toSquare, takeMoves, squares));
         }
         if (
                 startPosition >= 14 &&
@@ -123,14 +135,21 @@ public class CheckersController {
                         squares.get(startPosition - 7).getXCoord() != 0 && squares.get(startPosition - 7).getXCoord() != 7 &&
                         squares.get(startPosition - 7).isBlack() ^ startSquare.isBlack()
         ) {
-            takeMoves.addAll(addTakeMoves(startPosition - 7, startPosition - 14, startSquare, takeMoves, squares));
+            takeMoves.addAll(addTakeMoves(startPosition - 7, startPosition - 14, startSquare, toSquare, takeMoves, squares));
         }
         return takeMoves;
     }
 
-    private List<TakeMove> findValidTakeMoves(Square currentSquare, List<Square> squares, Square startSquare, List<Square> piecesRemoved)  {
+    private List<TakeMove> findValidTakeMoves(Square currentSquare, List<Square> squares, Square startSquare, Square endSquare, List<Square> piecesRemoved)  {
         List<TakeMove> takeMoves = new LinkedList<>();
         int currentPosition = currentSquare.getYCoord() * 8 + currentSquare.getXCoord();
+        // = assign data to a variable
+        // == asks if one is equal to the other
+        // signature = accessor, type, name and
+        if(currentSquare.getXCoord() == endSquare.getXCoord() && currentSquare.getYCoord() == endSquare.getYCoord()) {
+            return takeMoves;
+        }
+
         if (
                 currentPosition <= 45 &&
                         !squares.get(currentPosition + 18).isContainsPiece() &&
@@ -138,11 +157,7 @@ public class CheckersController {
                         squares.get(currentPosition + 9).getXCoord() != 0 && squares.get(currentPosition + 9).getXCoord() != 7 &&
                         squares.get(currentPosition + 9).isBlack() ^ startSquare.isBlack()
         ) {
-            piecesRemoved.add(squares.get(currentPosition + 9));
-            TakeMove takeMove = new TakeMove(startSquare, squares.get(currentPosition + 18), piecesRemoved);
-            takeMoves.add(takeMove);
-            squares.set(currentPosition+9, squares.get(currentPosition+9).toBuilder().containsPiece(false).build());
-            takeMoves.addAll(findValidTakeMoves(squares.get(currentPosition + 18), squares, startSquare, piecesRemoved));
+            takeMoves.addAll(addTakeMoves(currentPosition + 9, currentPosition + 18, startSquare, endSquare, takeMoves, squares, piecesRemoved));
 
         }
         if (
@@ -152,11 +167,7 @@ public class CheckersController {
                         squares.get(currentPosition - 9).getXCoord() != 0 && squares.get(currentPosition - 9).getXCoord() != 7 &&
                         squares.get(currentPosition - 9).isBlack() ^ startSquare.isBlack()
         ) {
-            piecesRemoved.add(squares.get(currentPosition - 9));
-            TakeMove takeMove = new TakeMove(startSquare, squares.get(currentPosition - 18), piecesRemoved);
-            takeMoves.add(takeMove);
-            squares.set(currentPosition-9, squares.get(currentPosition-9).toBuilder().containsPiece(false).build());
-            takeMoves.addAll(findValidTakeMoves(squares.get(currentPosition - 18), squares, startSquare, piecesRemoved));
+            takeMoves.addAll(addTakeMoves(currentPosition - 9, currentPosition - 18, startSquare, endSquare, takeMoves, squares, piecesRemoved));
 
         }
         if (
@@ -166,11 +177,7 @@ public class CheckersController {
                         squares.get(currentPosition + 7).getXCoord() != 0 && squares.get(currentPosition + 7).getXCoord() != 7 &&
                         squares.get(currentPosition + 7).isBlack() ^ startSquare.isBlack()
         ) {
-            piecesRemoved.add(squares.get(currentPosition + 7));
-            TakeMove takeMove = new TakeMove(startSquare, squares.get(currentPosition + 14), piecesRemoved);
-            takeMoves.add(takeMove);
-            squares.set(currentPosition+7, squares.get(currentPosition+7).toBuilder().containsPiece(false).build());
-            takeMoves.addAll(findValidTakeMoves(squares.get(currentPosition + 14), squares, startSquare, piecesRemoved));
+            takeMoves.addAll(addTakeMoves(currentPosition + 7, currentPosition + 14, startSquare, endSquare, takeMoves, squares, piecesRemoved));
 
         }
         if (
@@ -180,11 +187,7 @@ public class CheckersController {
                         squares.get(currentPosition - 7).getXCoord() != 0 && squares.get(currentPosition - 7).getXCoord() != 7 &&
                         squares.get(currentPosition - 7).isBlack() ^ startSquare.isBlack()
         ) {
-            piecesRemoved.add(squares.get(currentPosition - 7));
-            TakeMove takeMove = new TakeMove(startSquare, squares.get(currentPosition - 14), piecesRemoved);
-            takeMoves.add(takeMove);
-            squares.set(currentPosition-7, squares.get(currentPosition-7).toBuilder().containsPiece(false).build());
-            takeMoves.addAll(findValidTakeMoves(squares.get(currentPosition - 14), squares, startSquare, piecesRemoved));
+            takeMoves.addAll(addTakeMoves(currentPosition - 7, currentPosition - 14, startSquare, endSquare, takeMoves, squares, piecesRemoved));
 
         }
         return takeMoves;
@@ -237,7 +240,7 @@ public class CheckersController {
         }
 
 
-        List<TakeMove> validTakeMoves = findValidTakeMoves(startSquare, boardRepository.findAll().get(0).getSquares());
+        List<TakeMove> validTakeMoves = findValidTakeMoves(startSquare, toSquare,  boardRepository.findAll().get(0).getSquares());
         List<TakeMove> matchingMoves = validTakeMoves.stream().filter(takeMove -> {
             int startPosition = yFrom * 8 + xFrom;
             int endPosition = yTo * 8 + xTo;
